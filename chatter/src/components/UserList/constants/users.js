@@ -1,4 +1,4 @@
-export default [
+const users = [
   { name: 'Botty', userId: 'bot', icon: 'fas fa-comment-dots', isOnline: true, color: '#4DB8EF' },
   { name: 'Brandon Andrews', userId: 'brandon', isOnline: false, lastActive: '3 hours go', color: '#DD95BA', lastMessage: 'Hello there!' },
   { name: 'Clayton Day', userId: 'clayton', isOnline: false, lastActive: 'Yesterday', color: '#62D5D1', lastMessage: 'Yes of course. Thanks' },
@@ -11,3 +11,5 @@ export default [
   { name: 'Lottie Jordan', userId: 'lottie', isOnline: false, lastActive: 'Jul 23',  color: '#62D5D1', lastMessage: '728 Feeney Street.' },
   { name: 'Augusta Castillo', userId: 'augusta', isOnline: false, lastActive: 'Jul 23',  color: '#82D39F', lastMessage: 'I got the transfer! :D' }
 ];
+
+export default users;

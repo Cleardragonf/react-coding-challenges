@@ -1,4 +1,4 @@
-export default [
+const icons = [
   { name: 'far fa-circle', maxSize: 40 },
   { name: 'fas fa-circle', minSize: 7, maxSize: 10 },
   { name: 'far fa-star', maxSize: 40 },
@@ -9,3 +9,4 @@ export default [
   { name: 'mdi mdi-hexagon-outline', maxSize: 40 },
   { name: 'mdi mdi-triangle-outline', minSize: 20, maxSize: 40 }
 ];
+export default icons;
