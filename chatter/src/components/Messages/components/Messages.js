@@ -17,7 +17,7 @@ const socket = io(
 const ME = 'me';
 const BOT = 'bot';
 
-function Messages() {
+function Messages({ contactPanelMinimised }) {
   const [playSend] = useSound(config.SEND_AUDIO_URL);
   const [playReceive] = useSound(config.RECEIVE_AUDIO_URL);
   const { setLatestMessage } = useContext(LatestMessagesContext);
@@ -58,33 +58,78 @@ function Messages() {
     };
   }, [setLatestMessage, playReceive]);
 
-  // Send message to bot
-  const sendMessage = useCallback(() => {
-    if (!message.trim()) return;
+  // Update sendMessage to accept a message argument
+  const sendMessage = useCallback((msgToSend) => {
+    if (!msgToSend.trim()) return;
     setMessages(prev => [
       ...prev,
-      { id: Date.now(), user: ME, message }
+      { id: Date.now(), user: ME, message: msgToSend }
     ]);
-    setLatestMessage(ME, message);
+    setLatestMessage(ME, msgToSend);
     playSend();
-    socket.emit('user-message', message);
+    socket.emit('user-message', msgToSend);
     setMessage('');
     if (inputRef.current) inputRef.current.focus();
-  }, [message, setLatestMessage, playSend]);
+  }, [setLatestMessage, playSend]);
 
   // Handle input change
   const onChangeMessage = useCallback((e) => {
     setMessage(e.target.value);
   }, []);
 
+  function renderMessageContent(msg) {
+    const attachmentMatch = msg.message.match(/\[Attachment: ([^\]]+)\]/);
+    if (attachmentMatch) {
+      const filename = attachmentMatch[1];
+      const text = msg.message.replace(/\s*\[Attachment: [^\]]+\]/, '');
+      return (
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', margin: '12px 0' }}>
+          <a
+            href={`/uploads/${filename}`}
+            download={filename}
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              color: '#3898EB',
+              textDecoration: 'none'
+            }}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <i
+              className="fas fa-file-archive"
+              style={{
+                fontSize: 48,
+                color: '#f4b400',
+                marginBottom: 4,
+                display: 'block',
+                textAlign: 'center'
+              }}
+            />
+            <span style={{ fontWeight: 500, fontSize: 16, textAlign: 'center', marginTop: 4 }}>
+              {filename}
+            </span>
+          </a>
+          {text && (
+            <div style={{ marginTop: 8, textAlign: 'center', color: '#333' }}>
+              {text}
+            </div>
+          )}
+        </div>
+      );
+    }
+    return msg.message;
+  }
+
   return (
-    <div className="messages">
+    <div className={`messages${contactPanelMinimised ? ' messages--expanded' : ''}`}>
       <Header />
       <div className="messages__list" id="message-list" ref={messageListRef}>
         {messages.map((msg, idx) => (
           <Message
             key={msg.id}
-            message={msg}
+            message={{ ...msg, message: renderMessageContent(msg) }}
             nextMessage={messages[idx + 1]}
             botTyping={botTyping}
           />

@@ -4,11 +4,32 @@ import './_contact-panel.scss';
 
 export default function ContactPanel() {
   const [minimised, setMinimised] = useState(Boolean(localStorage.getItem('minimised')));
+  const [attachments, setAttachments] = useState([
+    { name: 'Dataset.csv', icon: 'fas fa-paperclip', url: '/uploads/Dataset.csv' },
+    { name: 'bot_face.jpg', icon: 'far fa-image', url: '/uploads/bot_face.jpg' }
+  ]);
+  // Show only 3 attachments unless "View All" is clicked
+  const [showAllAttachments, setShowAllAttachments] = useState(false);
+  const visibleAttachments = showAllAttachments ? attachments : attachments.slice(0, 3);
+
+  React.useEffect(() => {
+    function handleNewAttachment(e) {
+      if (e.detail && e.detail.filename) {
+        setAttachments(prev => {
+          if (prev.some(att => att.name === e.detail.filename)) return prev;
+          return [
+            ...prev,
+            { name: e.detail.filename, icon: 'fas fa-file-archive', url: `/uploads/${e.detail.filename}` }
+          ];
+        });
+      }
+    }
+    window.addEventListener('new-attachment', handleNewAttachment);
+    return () => window.removeEventListener('new-attachment', handleNewAttachment);
+  }, []);
 
   const onClick = () => {
-    // Remember user preference
     localStorage.setItem('minimised', minimised ? '' : 'true');
-
     setMinimised(!minimised);
   };
 
@@ -40,10 +61,33 @@ export default function ContactPanel() {
         <div className="contact-panel__body__block">
           <p className="contact-panel__body__label">Attachments</p>
           <div className="contact-panel__body__attachments">
-            <p><i className="fas fa-paperclip" />Dataset.csv</p>
-            <p><i className="far fa-image" />bot_face.jpg</p>
+            {visibleAttachments.map(att => (
+              <p key={att.name}>
+                <i className={att.icon} />
+                <a
+                  href={att.url}
+                  download={att.name}
+                  style={{ marginLeft: 6, color: '#3898EB', textDecoration: 'underline' }}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  {att.name}
+                </a>
+              </p>
+            ))}
           </div>
-          <p className="contact-panel__body__link">View All</p>
+          {attachments.length > 3 && (
+            <p
+              className="contact-panel__body__link"
+              style={{ cursor: 'pointer', userSelect: 'none' }}
+              onClick={() => setShowAllAttachments(v => !v)}
+            >
+              {showAllAttachments
+                ? 'Hide'
+                : <>View All <span style={{ color: '#3898EB' }}>({attachments.length})</span></>
+              }
+            </p>
+          )}
         </div>
         <button className="contact-panel__body__edit-btn">Edit Contact</button>
       </div>

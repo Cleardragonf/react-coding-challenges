@@ -7,10 +7,12 @@ export default function Footer({ sendMessage, onChangeMessage, message, inputRef
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const emojiPickerRef = useRef();
   const smileyIconRef = useRef();
+  const [pendingAttachment, setPendingAttachment] = useState(null);
+  const fileInputRef = useRef();
 
   const onKeyDown = ({ keyCode }) => {
     if (keyCode !== RETURN_KEY_CODE ) { return; }
-    sendMessage();
+    handleSend();
   };
 
   // Insert emoji at cursor position
@@ -69,6 +71,39 @@ export default function Footer({ sendMessage, onChangeMessage, message, inputRef
     setShowEmojiPicker((v) => !v);
   };
 
+  // Handle file selection
+  const handleAttachmentClick = () => {
+    if (fileInputRef.current) {
+      fileInputRef.current.value = null; // reset so same file can be picked again
+      fileInputRef.current.click();
+    }
+  };
+
+  const handleFileChange = (e) => {
+    const file = e.target.files && e.target.files[0];
+    if (file) {
+      setPendingAttachment(file);
+      // Optionally, you can show the filename in the input or as a preview
+      // onChangeMessage({ target: { value: message } });
+    }
+  };
+
+  // Custom send handler to include attachment if present
+  const handleSend = () => {
+    let newMessage = message;
+    if (pendingAttachment) {
+      newMessage = message + ` [Attachment: ${pendingAttachment.name}]`;
+    }
+    if (!newMessage.trim() && !pendingAttachment) return;
+    sendMessage(newMessage);
+    if (pendingAttachment) {
+      window.dispatchEvent(new CustomEvent('new-attachment', { detail: { filename: pendingAttachment.name } }));
+      setPendingAttachment(null);
+    }
+    // Clear input after send
+    onChangeMessage({ target: { value: '' } });
+  };
+
   return (
     <div className="messages__footer">
       <input
@@ -102,9 +137,25 @@ export default function Footer({ sendMessage, onChangeMessage, message, inputRef
             ))}
           </div>
         )}
-        <i className="fas fa-paperclip" />
+        <i
+          className="fas fa-paperclip"
+          style={{ cursor: 'pointer' }}
+          onClick={handleAttachmentClick}
+        />
+        <input
+          type="file"
+          ref={fileInputRef}
+          style={{ display: 'none' }}
+          onChange={handleFileChange}
+        />
         <i className="mdi mdi-ticket-outline" />
-        <button onClick={sendMessage} disabled={!message}>Send</button>
+        <button onClick={handleSend} disabled={!message && !pendingAttachment}>Send</button>
+        {/* Optionally show pending attachment name */}
+        {pendingAttachment && (
+          <span style={{ marginLeft: 8, fontSize: 12, color: '#888' }}>
+            {pendingAttachment.name}
+          </span>
+        )}
       </div>
     </div>
   );
